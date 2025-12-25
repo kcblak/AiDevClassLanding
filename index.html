@@ -164,13 +164,43 @@ window.addEventListener("scroll",()=>{
 });
 
 /* SELAR MODAL */
+const ensureSelarReady=(timeoutMs=4000)=>new Promise((resolve,reject)=>{
+  if(window.Selar&&typeof Selar.open==="function"){resolve(true);return;}
+  const existing=[...document.scripts].find(s=>s.src.includes("selar.co/embed.js"));
+  let script=existing;
+  if(!existing){
+    script=document.createElement("script");
+    script.src="https://selar.co/embed.js";
+    script.async=true;
+    document.head.appendChild(script);
+  }
+  const start=Date.now();
+  const check=()=>{
+    if(window.Selar&&typeof Selar.open==="function"){resolve(true);return;}
+    if(Date.now()-start>=timeoutMs){reject(new Error("timeout"));return;}
+    requestAnimationFrame(check);
+  };
+  script.addEventListener("load",check);
+  check();
+});
+const openSelar=(slug)=>{
+  try{
+    if(window.Selar&&typeof Selar.open==="function"){Selar.open({product:slug});return;}
+  }catch(e){}
+  const url=`https://selar.co/${slug}`;
+  const w=520,h=720;
+  const y=window.top.outerHeight/2+h/2;
+  const x=window.top.outerWidth/2-w/2;
+  window.open(url,"selarCheckout",`toolbar=0,location=0,menubar=0,scrollbars=1,resizable=1,width=${w},height=${h},left=${x},top=${y}`);
+};
 document.querySelectorAll(".selar-btn").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    const slug = btn.dataset.selarProduct;
-    if(window.Selar && Selar.open){
-      Selar.open({ product: slug });
-    } else {
-      alert("Selar modal script not loaded yet.");
+  btn.addEventListener("click",async()=>{
+    const slug=btn.dataset.selarProduct;
+    try{
+      await ensureSelarReady(5000);
+      openSelar(slug);
+    }catch{
+      openSelar(slug);
     }
   });
 });
