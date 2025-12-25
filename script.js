@@ -6,6 +6,11 @@ let lastScroll=window.scrollY;window.addEventListener("scroll",()=>{if(lastScrol
 let lastY=Infinity,lastT=0;
 document.addEventListener("mousemove",e=>{const y=e.clientY,t=Date.now();const dy=lastY===Infinity?0:lastY-y;const dt=t-lastT;if(!shown&&(y<=10||e.pageY<=10)&&(dy>=2||dt<=1000)){document.getElementById("exitPopup").style.display="flex";shown=true;sessionStorage.setItem("exit_shown","1");}lastY=y;lastT=t;});
 document.addEventListener("mouseleave",()=>{if(!shown){document.getElementById("exitPopup").style.display="flex";shown=true;sessionStorage.setItem("exit_shown","1");}});
+window.addEventListener("beforeunload",e=>{if(!shown){const m=document.getElementById("exitPopup");if(m){m.style.display="flex";shown=true;sessionStorage.setItem("exit_shown","1");}e.preventDefault();e.returnValue="";return "";}});
 document.querySelectorAll(".cta").forEach(btn=>{btn.addEventListener("click",e=>{e.preventDefault();const url="https://selar.co/je11414214?add_to_cart=1";const width=900;height=700;const left=(screen.width/2)-(width/2);const top=(screen.height/2)-(height/2);window.open(url,"SelarCheckout",`width=${width},height=${height},top=${top},left=${left},scrollbars=yes`);});});
 const video=document.getElementById("vsl");const iframe=document.getElementById("vslFrame");const playBtn=document.querySelector(".play-overlay");const pageDim=document.getElementById("pageDim");
+function exitImmersive(){document.body.classList.remove("immersive");video&&video.classList.remove("active");try{iframe&&iframe.contentWindow&&iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');}catch(e){}}
 if(playBtn&&iframe&&video){playBtn.addEventListener("click",()=>{document.body.classList.add("immersive");video.classList.add("active");const src=iframe.getAttribute("src")||"";if(!src.includes("autoplay=1")){iframe.src=src+(src.includes("?")?"&":"?")+"autoplay=1";}});}
+if(pageDim){pageDim.addEventListener("click",()=>{exitImmersive();});}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){exitImmersive();}});
+document.addEventListener("click",e=>{if(document.body.classList.contains("immersive")){const within=video&&video.contains(e.target);if(!within){exitImmersive();}}});
